@@ -3,26 +3,65 @@ package com.n3lk;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.logging.*;
 import static java.nio.file.Files.move;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
  class AnimeSorter {
-
      private static final Logger LOGGER = Logger.getLogger( AnimeSorter.class.getName() );
-    /**
+
+     // Constructor initializes: Logger - Handler - Formatter
+     AnimeSorter(String logDirectory) {
+        try {
+            /** @see <a href="http://docs.oracle.com/javase/7/docs/api/java/util/logging/FileHandler.html">FileHandler</a> for more on FileHandler function
+            FileHandler(String pattern,int limit,int count, boolean append)
+            @param pattern the pattern for naming the output file
+            @param limit the maximum number of bytes to write to any one file
+            @param count the number of files to use
+            @param append specifies append mode
+            **/
+            // Create handler, give location for the log file
+            FileHandler fh = new FileHandler(logDirectory,1000000,10,true);
+            // Setting up the log Formatter. SimpleFormatter() can be used instead of overriding.
+            // https://docs.oracle.com/javase/7/docs/api/java/util/Formatter.html
+            fh.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    SimpleDateFormat logTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    Calendar cal = new GregorianCalendar();
+                    cal.setTimeInMillis(record.getMillis());
+                    return  logTime.format(cal.getTime()) + " "  //gets formatted DateTime
+                            + record.getLevel() + " "  //gets level of log entry: info, fine,..., severe
+                            + record.getSourceClassName().substring( record.getSourceClassName().lastIndexOf(".")+1, record.getSourceClassName().length()) //gets formatted class name
+                            + "."
+                            + record.getSourceMethodName() //gets method name that called logger
+                            + "() : "
+                            + record.getMessage() + "\n"; //gets message
+                    }
+                });
+         //add handler to logger
+         LOGGER.addHandler(fh);
+         LOGGER.info("***AnimeSorter Log Init***");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+
+
+     /**
      *  Moves files that begin with "[HorribleSubs]" and end with ".mkv"
      *  @param sourceDirectory The source directory of the files
      *  @param targetDirectory The target directory of the files
      *  @throws IOException If an input or output exception occurred
      *
      **/
-    static void moveFiles(Path sourceDirectory, Path targetDirectory) throws IOException {
+     void moveFiles(Path sourceDirectory, Path targetDirectory) throws IOException {
 
-        //A pattern to match over each file
-        String pattern = "**/[HorribleSubs]*.mkv";
+        //A pattern to match over each file (must be "\\" instead of "/")
+        String pattern = "**\\[HorribleSubs]*.mkv";
         /**
          * Opens a directory, returning a DirectoryStream to iterate over the entries in the directory.
          * The elements returned by the directory stream's iterator are of type Path, each one representing an entry in the directory.
@@ -35,8 +74,9 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
          *
          * **/
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(sourceDirectory, pattern)) {
+
             for (Path entry: stream) {
-                System.out.println(entry.getFileName());
+                LOGGER.info("File Transfered: " + entry.getFileName().toString());
                 String input = entry.getFileName().toString();
                 File destFolder = new File( targetDirectory.toString() + '/' + entry.getFileName().toString().substring(input.indexOf(']')+2,input.lastIndexOf('-')-1));
 
@@ -44,61 +84,41 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
                 try {
                     if(destFolder.mkdir()) {
-                        System.out.println("Directory Created");
+                        LOGGER.info("New Directory Created");
                     } else {
-                        System.out.println("Directory is not created");
+                        LOGGER.info("New Directory Not Created");
                     }
-                    System.out.println(destPath);
+                    LOGGER.info("File Move Destination: " + destPath.toString());
                     move(entry,destPath, REPLACE_EXISTING);
                 } catch (IOException ex) {
-                    LOGGER.log( Level.SEVERE, ex.toString(), ex );
+                    LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
                     ex.printStackTrace();
-                } LOGGER.fine("done");
+                }
             }
         } catch (DirectoryIteratorException ex) {
             // I/O error encountered during the files iteration. Retrieved as an IOException using the getCause() method.
-            LOGGER.log( Level.SEVERE, ex.toString(), ex );
+            LOGGER.log(Level.SEVERE, ex.getMessage(),ex );
             throw ex.getCause();
 
         }
 
     }
 
-    /*
-always pass ex.toString() as the message here, because then when I "grep -n" for "Exception" in log files,
-I can see the message too. Otherwise, it is going to be on the next line of output generated by the stack dump,
-and you have to have a more advanced RegEx to match that line too, which often gets you more output than you need to look through.
-
-
-
-    try {
-    ...something that can throw an ignorable exception
-} catch( Exception ex ) {
-    LOGGER.log( Level.SEVERE, ex.toString(), ex );
-}
-    * logger.fine("doing stuff");
-        try{
-            Wombat.sneeze();
-        } catch (Exception ex) {
-            // Log the exception
-            logger.log(Level.WARNING, "trouble sneezing", ex);
-        }
-        logger.fine("done");
-    }
-    * */
-
-
     public static void main(String[] args) {
-        Path sourceDirectory = Paths.get("C:/Users/Nela/0/");
-        Path targetDirectory = Paths.get("C:/Users/Nela/1/");
+        //Location of source directory, target directory
+        Path sourceDirectory = Paths.get("C:/Users/n3lk/testing/source/");
+        Path targetDirectory = Paths.get("C:/Users/n3lk/testing/target/");
+        //Location of log file
+        String logDirectory = "C:/Users/n3lk/IdeaProjects/AnimeSorter/log/AnimeSorter.log";
 
+        AnimeSorter sorterObject = new AnimeSorter(logDirectory);
         try {
-            moveFiles(sourceDirectory,targetDirectory);
-        } catch (IOException ex) {
-            LOGGER.log( Level.SEVERE, ex.toString(), ex );
+            sorterObject.moveFiles(sourceDirectory,targetDirectory);
+        } catch (Exception ex) {
+            LOGGER.log( Level.SEVERE, "Exception: " + ex.toString(), ex );
             ex.printStackTrace();
         }
+        LOGGER.info("***AnimeSorter Process Finished***");
     }
-
 
 }
