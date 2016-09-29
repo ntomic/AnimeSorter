@@ -116,7 +116,7 @@ class AnimeSorter {
             LOGGER.log(Level.SEVERE, "Exception: " + ex.toString(), ex);
             ex.printStackTrace();
         }
-        //LOGGER.info("***AnimeSorter Process Finished***");
+       //LOGGER.info("***AnimeSorter Process Finished***");
     }
 
 }
