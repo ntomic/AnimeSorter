@@ -25,14 +25,10 @@ class AnimeSorter {
         resourceStream.close();
     }
 
+    private AnimeSorter() throws IOException {
+        // Load Properties from config.properties file
+        loadProperties();
 
-    private AnimeSorter() {
-        try {
-            // Load Properites from config.properties file
-            loadProperties();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         // Logging initialization
         try {
             // Get properties for the log file
@@ -73,14 +69,14 @@ class AnimeSorter {
         // The entries returned by the iterator are filtered by matching the String representation of their file names against the given pattern.
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(sourceDirectory), pattern)) {
             for (Path entry : stream) {
-                String tempInput = entry.getFileName().toString();  // getFileName() returns highest folder name in directory hierarchy
+                String tempInput = entry.getFileName().toString();  // getFileName() returns highest file name in directory hierarchy
                 // tempInput = "[HorribleSubs] Hunter x Hunter - 138 [720p]" => shortFileName = "Hunter x Hunter"
                 String shortFileName = tempInput.substring(tempInput.indexOf(']') + 2, tempInput.lastIndexOf('-') - 1);
                 File destinationFolder = new File(targetDirectory + shortFileName);
 
                 Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName()); // resolve() combines two paths
                 try {
-                    if (destinationFolder.mkdir()) LOGGER.info("Created Folder " + destinationFolder);
+                    if (destinationFolder.mkdirs()) LOGGER.info("Created Folder " + destinationFolder);
                     move(entry, destinationPath, REPLACE_EXISTING); // Path move(Path source, Path target, CopyOption option)
                     LOGGER.info(tempInput + " MOVED TO " + destinationFolder);
                 } catch (IOException ex) {

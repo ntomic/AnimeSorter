@@ -1,1 +1,0 @@
-java -jar AnimeSorter.jar com.n3lk.AnimeSorter

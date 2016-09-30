@@ -1,0 +1,1 @@
+java -cp :AnimeSorter.jar com.n3lk.AnimeSorter
