@@ -19,30 +19,27 @@ class AnimeSorter {
     private Properties properties = new Properties();
     private final String propertiesFile = "config.properties";
 
-    // Load Properites from config.properties file
     private void loadProperties() throws IOException {
         InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(propertiesFile);
         properties.load(resourceStream);
         resourceStream.close();
     }
 
-    // Constructor initializes: Properties - Logger - Handler - Formatter
+
     private AnimeSorter() {
         try {
+            // Load Properites from config.properties file
             loadProperties();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        String logProperty = properties.getProperty("logProperty");
-
+        // Logging initialization
         try {
-            /* FileHandler(String pattern,int limit,int count, boolean append): http://docs.oracle.com/javase/7/docs/api/java/util/logging/FileHandler.html
-             **/
-            // Create handler, give location for the log file
+            // Get properties for the log file
+            String logProperty = properties.getProperty("logProperty");
+            // Create FileHandler(location_of_log_ file + log_file_name, file_size_in_bytes, no_of_files_to_keep, bool_append)
             FileHandler fh = new FileHandler(logProperty + "AnimeSorter.log", 1000000, 10, true);
             // Setting up the log Formatter. SimpleFormatter() can be used instead of overriding.
-            // https://docs.oracle.com/javase/7/docs/api/java/util/Formatter.html
             fh.setFormatter(new Formatter() {
                 @Override
                 public String format(LogRecord record) {
@@ -66,17 +63,14 @@ class AnimeSorter {
         }
     }
 
-    //Moves files beginning with "[HorribleSubs]" and ending with ".mkv" to other directory
     private void moveFiles() throws IOException {
         // Getting properties from config.properties file
         String sourceDirectory = properties.getProperty("sourceProperty");
         String targetDirectory = properties.getProperty("targetProperty");
-        String pattern = properties.getProperty("patternProperty");  // A pattern to match over each file
+        String pattern = properties.getProperty("patternProperty");
 
-        /* Opens a directory, returning a DirectoryStream to iterate over the entries in the directory.
-         * The entries returned by the iterator are filtered by matching the String representation of their file names against the given globbing pattern.
-         * https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-         */
+        // newDirectoryStream opens a directory, returning a DirectoryStream to iterate over the entries in the directory.
+        // The entries returned by the iterator are filtered by matching the String representation of their file names against the given pattern.
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(sourceDirectory), pattern)) {
             for (Path entry : stream) {
                 String tempInput = entry.getFileName().toString();  // getFileName() returns highest folder name in directory hierarchy
@@ -84,12 +78,10 @@ class AnimeSorter {
                 String shortFileName = tempInput.substring(tempInput.indexOf(']') + 2, tempInput.lastIndexOf('-') - 1);
                 File destinationFolder = new File(targetDirectory + shortFileName);
 
-                Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName()); // resolve() function combines two paths
+                Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName()); // resolve() combines two paths
                 try {
                     if (destinationFolder.mkdir()) LOGGER.info("Created Folder " + destinationFolder);
-                    // Path move(Path source, Path target, CopyOption option)
-                    // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption
-                    move(entry, destinationPath, REPLACE_EXISTING);
+                    move(entry, destinationPath, REPLACE_EXISTING); // Path move(Path source, Path target, CopyOption option)
                     LOGGER.info(tempInput + " MOVED TO " + destinationFolder);
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
