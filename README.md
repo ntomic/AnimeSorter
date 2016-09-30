@@ -38,7 +38,7 @@ Change these properties by replacing the text after the '=' operator.
 
 ###Instructions
 
-1. Download and extract the .zip file from [Dropbox link](https://www.dropbox.com/s/tdzoguahwwmix1v/AnimeSorter.zip?dl=0) 
+1. Download and extract the .zip file from [Release link](https://github.com/ntomic/AnimeSorter/releases/download/v1.0.0/AnimeSorter.zip) 
 
 2. Change the ```config.properties``` file
 
