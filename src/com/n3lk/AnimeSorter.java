@@ -18,6 +18,7 @@ class AnimeSorter {
     private static final Logger LOGGER = Logger.getLogger(AnimeSorter.class.getName());
     private Properties properties = new Properties();
     private final String propertiesFile = "config.properties";
+
     // Load Properites from config.properties file
     private void loadProperties() throws IOException {
         InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(propertiesFile);
@@ -39,7 +40,7 @@ class AnimeSorter {
             /* FileHandler(String pattern,int limit,int count, boolean append): http://docs.oracle.com/javase/7/docs/api/java/util/logging/FileHandler.html
              **/
             // Create handler, give location for the log file
-            FileHandler fh = new FileHandler(logProperty, 1000000, 10, true);
+            FileHandler fh = new FileHandler(logProperty + "AnimeSorter.log", 1000000, 10, true);
             // Setting up the log Formatter. SimpleFormatter() can be used instead of overriding.
             // https://docs.oracle.com/javase/7/docs/api/java/util/Formatter.html
             fh.setFormatter(new Formatter() {
@@ -85,11 +86,11 @@ class AnimeSorter {
 
                 Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName()); // resolve() function combines two paths
                 try {
-                    if (destinationFolder.mkdir()) LOGGER.info("Created Folder "  + destinationFolder);
-                        // Path move(Path source, Path target, CopyOption option)
-                        // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption
-                     move(entry, destinationPath, REPLACE_EXISTING);
-                     LOGGER.info(tempInput + " MOVED TO " + destinationFolder );
+                    if (destinationFolder.mkdir()) LOGGER.info("Created Folder " + destinationFolder);
+                    // Path move(Path source, Path target, CopyOption option)
+                    // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption
+                    move(entry, destinationPath, REPLACE_EXISTING);
+                    LOGGER.info(tempInput + " MOVED TO " + destinationFolder);
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
                     ex.printStackTrace();
@@ -110,7 +111,7 @@ class AnimeSorter {
             LOGGER.log(Level.SEVERE, "Exception: " + ex.toString(), ex);
             ex.printStackTrace();
         }
-       //LOGGER.info("***AnimeSorter Process Finished***");
+        //LOGGER.info("***AnimeSorter Process Finished***");
     }
 
 }
