@@ -14,10 +14,10 @@ import static java.nio.file.Files.move;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 class AnimeSorter {
+
     private static final Logger LOGGER = Logger.getLogger(AnimeSorter.class.getName());
     private Properties properties = new Properties();
     private final String propertiesFile = "config.properties";
-
     // Load Properites from config.properties file
     private void loadProperties() throws IOException {
         InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(propertiesFile);
@@ -59,7 +59,7 @@ class AnimeSorter {
             });
             //add handler to logger
             LOGGER.addHandler(fh);
-            // LOGGER.info("***AnimeSorter Log Init***");
+            LOGGER.info("***AnimeSorter Log Init***");
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -67,35 +67,29 @@ class AnimeSorter {
 
     //Moves files beginning with "[HorribleSubs]" and ending with ".mkv" to other directory
     private void moveFiles() throws IOException {
-        // Getting source/target properties from config.properties file
-        String sourceProperty = properties.getProperty("sourceProperty");
-        String targetProperty = properties.getProperty("targetProperty");
-
-        // Creating Path objects from String
-        Path sourceDirectory = Paths.get(sourceProperty);
-        Path targetDirectory = Paths.get(targetProperty);
-
-        //A pattern to match over each file (must be "\\" instead of "/")
-        String pattern = "**\\[HorribleSubs]*.mkv";
+        // Getting properties from config.properties file
+        String sourceDirectory = properties.getProperty("sourceProperty");
+        String targetDirectory = properties.getProperty("targetProperty");
+        String pattern = properties.getProperty("patternProperty");  // A pattern to match over each file
 
         /* Opens a directory, returning a DirectoryStream to iterate over the entries in the directory.
          * The entries returned by the iterator are filtered by matching the String representation of their file names against the given globbing pattern.
          * https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-         * Can also be done with regex!
-         **/
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(sourceDirectory, pattern)) {
+         */
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(sourceDirectory), pattern)) {
             for (Path entry : stream) {
-                String input = entry.getFileName().toString();
-                File destinationFolder = new File(targetDirectory.toString() + '/' + entry.getFileName().toString().substring(input.indexOf(']') + 2, input.lastIndexOf('-') - 1));
-                // resolve() function combines paths
-                Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName());
+                String tempInput = entry.getFileName().toString();  // getFileName() returns highest folder name in directory hierarchy
+                // tempInput = "[HorribleSubs] Hunter x Hunter - 138 [720p]" => shortFileName = "Hunter x Hunter"
+                String shortFileName = tempInput.substring(tempInput.indexOf(']') + 2, tempInput.lastIndexOf('-') - 1);
+                File destinationFolder = new File(targetDirectory + shortFileName);
+
+                Path destinationPath = destinationFolder.toPath().resolve(entry.getFileName()); // resolve() function combines two paths
                 try {
-                    if (destinationFolder.mkdir()) //LOGGER.info("Created Folder");
-                        // Path move (Path source, Path target, CopyOption option)
+                    if (destinationFolder.mkdir()) LOGGER.info("Created Folder "  + destinationFolder);
+                        // Path move(Path source, Path target, CopyOption option)
                         // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption
-                        // REPLACE_EXISTING: If the target file exists, then the target file is replaced
-                        move(entry, destinationPath, REPLACE_EXISTING);
-                    // LOGGER.info("File Move Destination: " + destPath.toString());
+                     move(entry, destinationPath, REPLACE_EXISTING);
+                     LOGGER.info(tempInput + " MOVED TO " + destinationFolder );
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
                     ex.printStackTrace();
