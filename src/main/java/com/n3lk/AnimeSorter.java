@@ -9,6 +9,8 @@ import java.util.Properties;
 import java.util.logging.*;
 import static java.nio.file.Files.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import org.apache.commons.cli.*;
+
 
 class AnimeSorter
 {
@@ -128,7 +130,7 @@ class AnimeSorter
 					}
 					if(!tryMove(entry, fileDestinationPath)) {
                         Files.copy(entry, fileDestinationPath, REPLACE_EXISTING);
-						LOGGER.info(entry + " COPIED TO " + fileDestinationPath + "\nPlease delete manually! ");
+                        Files.delete(entry);
 					}
 
 				} catch(IOException ex)
